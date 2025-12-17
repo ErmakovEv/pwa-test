@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "concurrently \"npm:dev:client\" \"npm:dev:server\"",
     "dev:client": "cd frontend && npm run dev",
-    "dev:server": "node server.js",
+    "dev:server": "node backend/server.js",
     "build": "cd frontend && npm run build",
-    "start": "node server.js"
+    "start": "node backend/server.js"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +16,7 @@
   "type": "commonjs",
   "dependencies": {
     "concurrently": "^9.2.1",
+    "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "web-push": "^3.6.7"
   }

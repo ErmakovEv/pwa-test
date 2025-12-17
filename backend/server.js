@@ -1,17 +1,23 @@
 const express = require('express');
 const webpush = require('web-push');
-const bodyParser = require('body-parser');
 const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 
 const app = express();
-app.use(bodyParser.json());
+app.use(express.json({ limit: '100kb' }));
 
-// === VAPID ключи: подставь свои значения ===
-const VAPID_PUBLIC_KEY = 'BIyfaI3doUmx3PX-41xhRwhxObOL56i8gHh8eIMqpHDhGGg1SyyI54eiMp1eCDUOCactiGcNws09AM-eKfBk2Ek';
-const VAPID_PRIVATE_KEY = 'AHbAPBl8rV2_4P6_l5tCC4wOY8VRMvxB9rdUuP3b2uE';
+// === VAPID ключи из переменных окружения ===
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
+const VAPID_EMAIL = process.env.VAPID_EMAIL || 'mailto:you@example.com';
+
+if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
+  console.error('Error: VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY must be set in environment variables');
+  process.exit(1);
+}
 
 webpush.setVapidDetails(
-  'mailto:you@example.com',
+  VAPID_EMAIL,
   VAPID_PUBLIC_KEY,
   VAPID_PRIVATE_KEY
 );
@@ -35,9 +41,17 @@ app.post('/api/subscribe', (req, res) => {
     subscriptionsByUser[userId] = [];
   }
 
-  // простое добавление без дедупликации
-  subscriptionsByUser[userId].push(subscription);
-  console.log(`New subscription for user ${userId}. Total: ${subscriptionsByUser[userId].length}`);
+  const existingIndex = subscriptionsByUser[userId].findIndex(
+    (sub) => sub.endpoint === subscription.endpoint
+  );
+
+  if (existingIndex === -1) {
+    subscriptionsByUser[userId].push(subscription);
+    console.log(`New subscription for user ${userId}. Total: ${subscriptionsByUser[userId].length}`);
+  } else {
+    subscriptionsByUser[userId][existingIndex] = subscription;
+    console.log(`Updated subscription for user ${userId}, index ${existingIndex}`);
+  }
 
   res.status(201).json({ ok: true });
 });
@@ -80,15 +94,21 @@ app.post('/api/schedule', (req, res) => {
   res.status(201).json({ ok: true, scheduledInMs: delay });
 });
 
+// JSON 404 для неизвестных API‑маршрутов
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API route not found!' });
+});
+
 // раздача собранного фронта (позже будем билдить в frontend/dist)
-app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
+app.use(express.static(path.join(__dirname, '..', 'frontend', 'dist')));
 
 // SPA fallback
 app.use((req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'frontend', 'dist', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);
 });
+
