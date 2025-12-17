@@ -1,0 +1,20 @@
+{
+  "name": "PWA Push Demo",
+  "short_name": "PushDemo",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1976d2",
+  "icons": [
+    {
+      "src": "/icons/icon-1.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-2.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
