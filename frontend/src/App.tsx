@@ -44,7 +44,9 @@ async function subscribeUser(userId: string) {
 
 const App: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
-  const [permission, setPermission] = useState<NotificationPermission>(Notification.permission);
+  const [permission, setPermission] = useState<NotificationPermission>(
+    typeof Notification !== 'undefined' ? Notification.permission : 'default'
+  );
   const [scheduledTime, setScheduledTime] = useState('');
   const [title, setTitle] = useState('Напоминание');
   const [body, setBody] = useState('Это тестовое push‑уведомление');
@@ -76,6 +78,11 @@ const App: React.FC = () => {
     if (!userId) return;
 
     try {
+      if (typeof Notification === 'undefined') {
+        alert('Уведомления не поддерживаются в этом браузере / на этом устройстве.');
+        return;
+      }
+
       setLoadingSubscribe(true);
       const result = await Notification.requestPermission();
       setPermission(result);
